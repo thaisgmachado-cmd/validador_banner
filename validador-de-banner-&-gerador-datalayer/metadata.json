@@ -1,5 +1,0 @@
-{
-  "name": "Validador de Banner & Gerador DataLayer",
-  "description": "Uma ferramenta estrita para validar dimensões de banners, extrair textos via OCR e gerar objetos Data Layer (select_promotion) formatados para GTM.",
-  "requestFramePermissions": []
-}
