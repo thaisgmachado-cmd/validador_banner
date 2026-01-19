@@ -33,6 +33,38 @@ export const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+export const convertSvgToPng = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        // Define um tamanho padrão caso o SVG não tenha dimensões intrínsecas claras
+        // Mas o ideal é que ele use o tamanho real para validação correta.
+        canvas.width = img.naturalWidth || 1920;
+        canvas.height = img.naturalHeight || 1080;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+        // Fundo branco para garantir legibilidade no OCR (SVGs costumam ser transparentes)
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        // Retorna apenas o base64 sem o prefixo data:image/png;base64,
+        const pngData = canvas.toDataURL('image/png').split(',')[1];
+        resolve(pngData);
+      };
+      img.onerror = () => reject(new Error('Falha ao carregar imagem SVG'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Falha ao ler arquivo SVG'));
+    reader.readAsDataURL(file);
+  });
+};
+
 export const getImageDimensions = (file: File): Promise<{ width: number; height: number }> => {
   return new Promise((resolve) => {
     const img = new Image();

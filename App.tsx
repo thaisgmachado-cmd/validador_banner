@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { AppStep, ValidationResult, DataLayerObject } from './types';
 import { VALID_DIMENSIONS, ACCEPTED_FORMATS, BRANDS } from './constants';
-import { getImageDimensions, fileToBase64, formatToDataLayerString } from './utils';
+import { getImageDimensions, fileToBase64, formatToDataLayerString, convertSvgToPng } from './utils';
 import { extractBannerText } from './services/geminiService';
 import FileUpload from './components/FileUpload';
 
@@ -27,7 +27,8 @@ const App: React.FC = () => {
 
     try {
       const dimensions = await getImageDimensions(selectedFile);
-      const format = selectedFile.type.split('/')[1].toUpperCase();
+      const isSvg = selectedFile.type === 'image/svg+xml';
+      const format = isSvg ? 'SVG' : selectedFile.type.split('/')[1].toUpperCase();
       
       const isValidDimension = VALID_DIMENSIONS.some(
         d => d.width === dimensions.width && d.height === dimensions.height
@@ -48,8 +49,20 @@ const App: React.FC = () => {
       }
 
       setLoadingMsg('Extraindo textos da imagem (OCR)...');
-      const base64 = await fileToBase64(selectedFile);
-      const ocrResult = await extractBannerText(base64, selectedFile.type);
+      
+      let base64ToProcess: string;
+      let mimeTypeToProcess: string;
+
+      if (isSvg) {
+        setLoadingMsg('Convertendo SVG para PNG para análise...');
+        base64ToProcess = await convertSvgToPng(selectedFile);
+        mimeTypeToProcess = 'image/png';
+      } else {
+        base64ToProcess = await fileToBase64(selectedFile);
+        mimeTypeToProcess = selectedFile.type;
+      }
+
+      const ocrResult = await extractBannerText(base64ToProcess, mimeTypeToProcess);
 
       setValidation({
         isValid: true,
@@ -76,7 +89,13 @@ const App: React.FC = () => {
     e.preventDefault();
     if (!validation) return;
 
-    const formattedPageName = formatToDataLayerString(interactionData.pageName);
+    let formattedPageName = formatToDataLayerString(interactionData.pageName);
+    
+    // Regra de Negócio: Se o pagename contiver "inscricao" ou similares (já normalizado para "inscricao"), mudar para "funil"
+    if (formattedPageName.includes('inscricao')) {
+      formattedPageName = 'funil';
+    }
+
     const formattedLocation = formatToDataLayerString(interactionData.locationElement);
     const formattedText = formatToDataLayerString(validation.textElement || '');
     const formattedPromo = formatToDataLayerString(validation.promotionName || '');
@@ -330,11 +349,19 @@ const App: React.FC = () => {
                         <div className="mt-4">
                           <p className="text-[10px] uppercase font-bold text-slate-400 mb-3 tracking-widest text-center">Visualização</p>
                           <div className="rounded-xl overflow-hidden border border-slate-200 shadow-lg group relative">
-                            <img 
-                              src={imagePreviewUrl} 
-                              alt="Preview do Banner" 
-                              className="w-full h-auto object-contain max-h-[300px] transition-transform duration-500 group-hover:scale-105"
-                            />
+                            {file?.type === 'image/svg+xml' ? (
+                                <div className="p-4 bg-white flex items-center justify-center min-h-[200px]">
+                                    <object data={imagePreviewUrl} type="image/svg+xml" className="max-w-full max-h-[300px]">
+                                        SVG Preview
+                                    </object>
+                                </div>
+                            ) : (
+                                <img 
+                                  src={imagePreviewUrl} 
+                                  alt="Preview do Banner" 
+                                  className="w-full h-auto object-contain max-h-[300px] transition-transform duration-500 group-hover:scale-105"
+                                />
+                            )}
                             <div className="absolute inset-0 bg-indigo-600 opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none"></div>
                           </div>
                         </div>
@@ -370,7 +397,7 @@ const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="py-8 text-center text-slate-400 text-xs">
-        <p>© {new Date().getFullYear()} Validador de Banner Estrito • GTM Integration v1.5</p>
+        <p>© {new Date().getFullYear()} Validador de Banner Estrito • GTM Integration v1.6</p>
       </footer>
 
       <style>{`
