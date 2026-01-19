@@ -57,7 +57,7 @@ const App: React.FC = () => {
         height: dimensions.height,
         format,
         promotionName: ocrResult.promotionName,
-        textElement: ocrResult.textElement
+        textElement: ocrResult.textElement || '' // Ensure it's at least an empty string
       });
 
       setStep(AppStep.INTERACTION);
@@ -236,7 +236,7 @@ const App: React.FC = () => {
                 <div className="mb-8 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                   <p className="text-indigo-900 text-xs font-bold uppercase mb-2 tracking-widest opacity-60">Extraído via OCR:</p>
                   <p className="text-indigo-900 text-sm"><span className="font-bold">Promotion:</span> {validation.promotionName || 'Não detectado'}</p>
-                  <p className="text-indigo-900 text-sm"><span className="font-bold">CTA:</span> {validation.textElement || 'Não detectado'}</p>
+                  <p className="text-indigo-900 text-sm"><span className="font-bold">CTA:</span> {validation.textElement || '(Vazio)'}</p>
                 </div>
 
                 <form onSubmit={handleGenerateDataLayer} className="space-y-6">
@@ -370,7 +370,7 @@ const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="py-8 text-center text-slate-400 text-xs">
-        <p>© {new Date().getFullYear()} Validador de Banner Estrito • GTM Integration v1.3</p>
+        <p>© {new Date().getFullYear()} Validador de Banner Estrito • GTM Integration v1.5</p>
       </footer>
 
       <style>{`

@@ -4,6 +4,7 @@
  * - Letras minúsculas
  * - Sem acentos
  * - Separados por underscore (_) em vez de espaços
+ * - Hífens (-) convertidos em underscore (_)
  * - Caracteres especiais removidos (exceto _)
  */
 export const formatToDataLayerString = (str: string): string => {
@@ -13,6 +14,7 @@ export const formatToDataLayerString = (str: string): string => {
     .toLowerCase()
     .normalize('NFD') // Decompor caracteres acentuados
     .replace(/[\u0300-\u036f]/g, '') // Remover acentos
+    .replace(/-/g, '_') // Substituir hífens por underscore (Nova Regra)
     .replace(/\s+/g, '_') // Espaços para underscore
     .replace(/[^a-z0-9_]/g, '') // Remover caracteres especiais
     .replace(/_+/g, '_') // Evitar múltiplos underscores seguidos
@@ -38,6 +40,10 @@ export const getImageDimensions = (file: File): Promise<{ width: number; height:
     img.onload = () => {
       resolve({ width: img.width, height: img.height });
       URL.revokeObjectURL(img.src);
+    };
+    // Support for SVGs that might not have intrinsic size in all browsers
+    img.onerror = () => {
+        resolve({ width: 0, height: 0 });
     };
   });
 };

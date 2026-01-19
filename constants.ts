@@ -13,7 +13,7 @@ export const BRANDS = [
 ];
 
 export const VALID_DIMENSIONS: BannerDimensions[] = [
-  // SVG Patterns (mapped from PDF)
+  // SVG Patterns (mapped from PDF) - Mantendo dimensões pois banners podem ser exportados como bitmap nessas medidas
   { width: 1440, height: 260, label: 'Banner Principal Desktop (SVG)', format: 'SVG' },
   { width: 390, height: 200, label: 'Banner Principal Mobile (SVG)', format: 'SVG' },
   { width: 1366, height: 104, label: 'Strip Banner Desktop (SVG)', format: 'SVG' },
